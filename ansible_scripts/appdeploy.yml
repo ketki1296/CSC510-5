@@ -1,0 +1,18 @@
+---
+- hosts: all
+  become: yes
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: git clone csc5105
+      git: 
+          repo: "https://{{ githubuser | urlencode }}:{{ githubpassword }}@github.ncsu.edu/csc510-fall2019/CSC510-5.git"
+          dest: /home/ubuntu/CSC510-5
+      ignore_errors: yes
+    - name: install dependencies
+      command: pip3 install -r requirements.txt
+      args:
+         chdir: /home/ubuntu/CSC510-5/jarvisBot
+
+
+

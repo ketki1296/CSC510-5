@@ -1,0 +1,35 @@
+---
+- hosts: all
+  become: yes
+  become_user: root
+  vars_files: 
+    - vars.yml
+  tasks:
+   
+    - name: Login into the server
+      uri:
+        url: "{{ mattermost_user_api_url }}"
+        method: POST
+        body: '{ "login_id"{{":"}} "{{ professor }}", "password"{{":"}} "{{ professor_pwd }}" }'
+        body_format: json
+      register: response
+
+    - name: Set variables
+      set_fact:
+        token: "{{ response.token }}"
+
+    - debug: var=response.token
+
+
+    - name: Get Team
+      command: curl --request GET -H "Authorization{{':'}} Bearer {{ token }}" {{ mattermost_getteam_api_url }}
+      register: teams
+
+    - name: Set team_id
+      set_fact:
+        team_id: "{{ (teams.stdout|from_json)[0] }}"
+
+    - name: Create Channel
+      command: curl --request POST -H "Authorization{{':'}} Bearer {{ token }}" --data '{ "team_id"{{':'}} "{{ team_id.id  }}", "name"{{':'}} "questions", "display_name"{{':'}} "questions", "type"{{':'}} "O" }' {{ mattermost_channel_api_url }}      
+      
+      

@@ -1,0 +1,60 @@
+---
+- hosts: all
+  become: yes
+  #tasks:
+  vars_prompt:
+   # - name: "FeedbackEmail"
+    #  prompt: "please enter the login email"
+     # private: yes
+#    - name: "SMTPUsername"
+ #     prompt: " please enter the SMTP username"
+  #    private: yes
+  #  - name: "SMTPPassword"
+   #   prompt: "please enter the SMTP password"
+    #  private: yes
+    - name: "mmpwd"  
+      prompt: "please enter mattermost user password"
+      private: yes
+  vars_files: 
+    - vars.yml
+  vars:
+     SiteURL: "{{ SiteURL }}" 
+     DataSource: "{{ db_user }}:{{ mmpwd }}@tcp(127.0.0.1:3306)/mattermost?charset=utf8mb4,utf8&readTimeout=30s&writeTimeout=30s"
+     SendEmailNotifications: false
+     FeedbackName: No-Reply
+     SMTPServer: smtp.gmail.com
+     SMTPPort: 465
+     ConnectionSecurity: TLS
+     EnableSMTPAuth: true
+  tasks:
+    - name: Ansible config template creation
+      template:
+         src: ./config.json
+         #src: "{{ ansible_facts.env['PWD'] }}/root1.cnf.j2"
+         dest: /opt/mattermost/config/config.json
+    
+    - name: systemd file creation
+      file:
+         path: /lib/systemd/system/mattermost.service
+         state: touch
+    - name: copy into systemd file
+      copy:
+         src: ./unitfile.txt
+         dest: /lib/systemd/system/mattermost.service
+    - name: restarting systemctl service
+      systemd:
+         daemon_reload: yes
+    - name: start the mattermost servive
+      systemd:
+        state: started
+        name: mattermost.service
+    - name: enable mattermost.service
+      systemd:
+         enabled: yes
+         name: mattermost.service
+
+
+
+
+
+

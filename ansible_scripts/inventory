@@ -1,0 +1,4 @@
+[web]
+54.86.17.226 ansible_ssh_user=ubuntu ansible_ssh_private_key_file=~/aws 
+[web:vars]
+validate_certs=False

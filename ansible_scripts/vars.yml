@@ -1,0 +1,15 @@
+mattermost_user_api_url: 
+mattermost_bots_api_url: 
+mattermost_getteam_api_url:
+mattermost_channel_api_url: 
+SiteURL: ""
+url: 
+team_name: 
+db_user: 
+professor: ""
+professor_pwd: ""
+botname: 
+firstname: 
+username: 
+githubuser: "" 
+githubpassword: "" 

@@ -1,0 +1,23 @@
+- hosts: all
+  become: yes
+  become_user: root
+  
+  
+  tasks:
+
+    - name: Create a Database
+      mysql_db:
+        name: RewardBot
+        state: present
+
+    - name: Copy database dump file
+      copy:
+        src: jarvis.sql
+        dest: /tmp
+
+    - name: Restore Database
+      mysql_db:
+        name: RewardBot
+        state: import
+        target: /tmp/jarvis.sql
+

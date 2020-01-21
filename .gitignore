@@ -1,0 +1,6 @@
+jarvisBot/venv/*
+jarvisBot/.idea
+.idea/
+.vscode/
+jarvisBot/src/config.json
+jarvisBot/src/client_secret.json

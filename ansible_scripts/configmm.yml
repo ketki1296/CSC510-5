@@ -1,0 +1,87 @@
+---
+- hosts: all
+  become: yes
+  vars_files: 
+    - vars.yml 
+  # vars_prompt:
+  #   - name: "firstname"
+  #     prompt: "please enter the firstname"
+  #     private: no
+  #   - name: "email"
+  #     prompt: " please enter the email"
+  #     private: no
+  #   - name: "username"
+  #     prompt: "please enter the username"
+  #     private: no
+  #   - name: "password"
+  #     prompt: "please enter the password"
+  #     private: no
+  tasks:
+     - name: check if the page returns ok
+       uri:
+         url: "{{ url }}"
+         return_content: yes
+#       register: this
+ #      failed_when: "'bhavya ' not in this.content"
+
+     
+     - name: check if user exist
+       command: ./mattermost user search bd
+       args:
+         chdir: /opt/mattermost/bin
+       register: user_contents
+     - debug: msg="{{user_contents.stderr.split('\n')}}"
+     
+     - name: create user
+       command:  "./mattermost user create --firstname {{ firstname }} --system_admin --email {{ professor }} --username {{ username }} --password {{ professor_pwd }}"
+       args:
+         chdir: /opt/mattermost/bin
+       when:  "'Unable' in user_contents.stderr"
+
+     - name: checking if team exists
+       command: ./mattermost team list
+       args:
+         chdir: /opt/mattermost/bin
+       register: team_content
+     - debug: msg="{{team_content.stderr.split('\n')}}"
+
+     - name: create team
+       command: ./mattermost team create --name {{ team_name }} --display_name "{{ team_name }}"
+       args:
+         chdir: /opt/mattermost/bin
+       when: '"{{ team_name }}" not in team_content.stdout'
+
+     - name: adding user to a team 
+       command: "./mattermost team add {{ team_name  }} {{ professor }} {{ username }}"
+       args:
+         chdir: /opt/mattermost/bin
+
+#     - name: site url setting
+ #      command: " {{ item }}"
+  #     args:
+   #       chdir: /opt/mattermost/bin
+    #   with_items:
+     #     - "./mattermost config set ServiceSettings.SiteURL http://{{ ansible_enp0s8.ipv4.address }}"
+  #        - ./mattermost config set EmailSettings.SendEmailNotifications true        
+   #       - ./mattermost config set EmailSettings.FeedbackName No-Reply
+    #      - ./mattermost config set EmailSettings.FeedbackEmail bddw112@gmail.com
+     #     - ./mattermost config set EmailSettings.SMTPUsername bddw112
+      #    - ./mattermost config set EmailSettings.SMTPPassword bhavya11
+       #   - ./mattermost config set EmailSettings.SMTPServer smtp.gmail.com
+        #  - ./mattermost config set EmailSettings.SMTPPort 465
+      #    - ./mattermost config set EmailSettings.ConnectionSecurity TLS
+       #   - ./mattermost config set EmailSettings.EnableSMTPAuth true
+    # - name: change file settings
+     #  command: "{{ item }}"
+      # args:
+  #        chdir: /opt/mattermost/bin
+   #    with_items:
+    #      - ./mattermost config set FileSettings.DriverName local
+     #     - ./mattermost config set FileSettings.Directory ./data/
+
+     #- name: listen address setting
+     - name: restarting mattermost service
+       systemd:
+           name: mattermost
+           state: restarted
+

@@ -1,0 +1,112 @@
+---
+- hosts: all
+  become: yes
+  remote_user: root
+  vars_prompt:
+    - name: "password"
+      prompt: "please enter the password"
+      private: yes
+    - name: "mmpwd"
+      prompt: " please enter mattermost user password "
+      private: yes
+  tasks:
+    - name: upgrade and update
+      apt:
+        update: yes
+        update_cache: yes
+        cache_valid_time: 86400
+
+    - name: password given
+      debug:
+        msg: "{{ password}}"
+  vars_files: 
+    - vars.yml
+  tasks:
+    - name: Mysql | Set root password
+      become: yes
+      shell: debconf-set-selections <<< 'mysql-server mysql-server/root_password password {{ password }}'
+      args:
+        executable: /bin/bash
+
+    - name: Mysql | Set root password again
+      become: yes
+      shell: debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password {{ password }}' 
+      args:
+        executable: /bin/bash
+
+
+    - name: install mysql server
+      apt:
+           name: "{{ packages }}"
+           state: present
+           update_cache: yes
+      vars:
+           packages:
+              - mysql-server-5.7
+              - python-mysqldb
+              - python3-pymysql
+
+    - name: create python symlink
+      file:
+        src: /usr/bin/python2.7
+        dest: /usr/bin/python
+        owner: root
+        group: root
+        state: link
+
+
+    - name: update mysql root password for all root accounts
+      sudo: yes
+      mysql_user: 
+        name: root
+        host: all 
+      #  host: "{{ item }}" 
+        password: "{{ password }}"
+        login_user: root
+        login_password: "{{ password }}"
+        check_implicit_admin: yes
+        priv: "*.*:ALL,GRANT"
+    #  with_items:
+#        - "{{ ansible_hostname }}"
+ #       - 127.0.0.1
+  #      - 1
+   #     - localhost
+    #- name: copying the working directory in remote server
+     # cop
+    - name:  print current directory
+      debug: 
+         msg: "{{ ansible_facts.env['PWD'] }}"
+    - name: Ansible template creation
+      template:
+         src: ./root1.cnf.j2
+         #src: "{{ ansible_facts.env['PWD'] }}/root1.cnf.j2"
+         dest: /root/.my.cnf
+    - name: create a databse mattermost
+      mysql_db: 
+          name: mattermost
+          state: present 
+
+
+    - name: create db user
+      mysql_user:
+          name: "{{ db_user }}"
+          host: "{{ item }}"
+          password: "{{ mmpwd }}"
+          priv: "mattermost.*:ALL,GRANT"
+      with_items:
+         - "{{ ansible_hostname }}"
+         - 127.0.0.1
+         - 1
+         - localhost
+
+    - name: comment bind address line
+      command: sed -i '/127.0.0.1/s/^/#/g' /etc/mysql/my.cnf          
+#    - name: comment bind address line
+ #     command: sed -i '/127.0.0.1/s/^/#/g' /etc/mysql/mysql.conf.d/mysqld.cnf
+    - name: command restart
+      command: sudo service mysql restart
+
+
+#    - name: 
+   # - name: store mysql root password
+   #   copy: src=/hw3/root1.cnf dest=/root/.my.cnf

@@ -1,0 +1,25 @@
+---
+- hosts: all
+  become: yes
+  become_user: root
+  vars_files: 
+    - vars.yml
+  tasks:
+   
+    - name: Login into the server
+      uri:
+        url: "{{ mattermost_user_api_url }}"
+        method: POST
+        body: "{ 'login_id'{{':'}} '{{ professor }}', 'password'{{':'}} '{{ professor_pwd }}'}"
+        body_format: json
+      register: response
+
+    - name: Set variables
+      set_fact:
+        token: "{{ response.token }}"
+
+    - debug: var=response.token
+
+
+    - name: Create Bot on mattermost using REST
+      command: curl --request POST -H "Authorization{{':'}} Bearer {{ token }}" --data '{ "username"{{':'}} "{{  botname }}", "description"{{':'}} "For ansible" }' {{ mattermost_bots_api_url }}
