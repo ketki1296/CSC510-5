@@ -13,7 +13,7 @@ mysql-connector-python==8.0.18
 paramiko==2.0.0
 pygobject>=3.22.0
 PyYAML==3.12
-requests==2.12.4
+requests==2.20.0
 urllib3==1.19.1
 xmltodict==0.10.2
 pyasn1
